@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VirtualStore</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--navy:#101b3b;--blue:#1473ea;--orange:#ff6b19;--bg:#f5f7fb}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--navy)}
+header{background:white;padding:18px 5%;position:sticky;top:0;z-index:5;border-bottom:1px solid #e8ebf2}
+.brand{font-size:28px;font-weight:800}.brand span{color:var(--orange)}
+.search{margin-top:15px;display:flex;gap:10px}.search input{flex:1;padding:15px 18px;border:1px solid #ccd5e5;border-radius:16px;font-size:17px}.search button{border:0;border-radius:16px;background:var(--blue);color:#fff;padding:0 25px;font-weight:700}
+main{padding:22px 5%;max-width:1200px;margin:auto}.stores{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}.store{background:#fff;border:1px solid #e4e8f0;border-radius:14px;padding:9px 13px;cursor:pointer}.store.active{border-color:var(--blue);box-shadow:0 0 0 2px #dcecff}
+.status{background:white;border-radius:16px;padding:15px 18px;margin-bottom:18px;box-shadow:0 4px 18px #16213d0d}
+table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 5px 25px #16213d12}
+th,td{padding:13px 12px;border-bottom:1px solid #edf0f5;text-align:left;vertical-align:middle}th{background:#f8faff;font-size:13px;color:#667085;text-transform:uppercase}tr:last-child td{border-bottom:0}
+.product{display:flex;align-items:center;gap:13px;min-width:300px}.pic{width:72px;height:72px;border-radius:12px;object-fit:cover;background:#eef2f8}.name{font-weight:700}.muted{color:#7b8497;font-size:13px;margin-top:4px}.price{font-size:18px;font-weight:800}.rating{color:#f59e0b;font-weight:700}.buy{background:var(--orange);color:white;text-decoration:none;padding:9px 13px;border-radius:10px;font-weight:700;white-space:nowrap}
+@media(max-width:800px){main{padding:15px 3%}table,thead,tbody,th,td,tr{display:block}thead{display:none}tr{background:#fff;margin-bottom:12px;border-radius:16px;padding:8px;box-shadow:0 3px 14px #16213d0d}td{border:0;padding:8px}.product{min-width:0}.buy{display:inline-block}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Virtual<span>Store</span></div>
+  <div class="search">
+    <input id="q" value="iPhone 20W charger" placeholder="Search for a product...">
+    <button onclick="search()">Search</button>
+  </div>
+</header>
+<main>
+  <div class="stores" id="stores"></div>
+  <div class="status" id="status">Demo mode: showing normalized comparison results. Connect the API adapters to enable live store data.</div>
+  <table>
+    <thead><tr><th>Product</th><th>Store</th><th>Price</th><th>Rating</th><th>Availability</th><th></th></tr></thead>
+    <tbody id="results"></tbody>
+  </table>
+</main>
+<script>
+const stores=["All","Trendyol","Hepsiburada","Amazon","n11","Sahibinden","Walmart","Costco Wholesale","Schwarz Group","The Home Depot","Aldi","The Kroger Co","Carrefour"];
+const data=[
+["Apple 20W USB-C Power Adapter","Amazon","$18.99",4.8,"In stock","https://www.amazon.com/"],
+["Apple 20W USB-C Power Adapter","Walmart","$19.97",4.7,"In stock","https://www.walmart.com/"],
+["Apple 20W USB-C Power Adapter","Trendyol","₺799",4.7,"In stock","https://www.trendyol.com/"],
+["Apple 20W USB-C Power Adapter","Hepsiburada","₺829",4.6,"In stock","https://www.hepsiburada.com/"],
+["USB-C 20W Fast Charger","n11","₺429",4.5,"In stock","https://www.n11.com/"],
+["Apple 20W USB-C Power Adapter","Carrefour","€21.99",4.4,"In stock","https://www.carrefour.com/"],
+["USB-C Fast Charger 20W","Sahibinden","₺350",4.2,"Seller listing","https://www.sahibinden.com/"]
+];
+const img="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144"><rect width="144" height="144" rx="20" fill="#eef2f8"/><rect x="48" y="22" width="48" height="100" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="3"/><circle cx="72" cy="105" r="4" fill="#94a3b8"/><path d="M60 46h24M60 60h24" stroke="#1473ea" stroke-width="5" stroke-linecap="round"/></svg>`);
+let active="All";
+function renderStores(){document.getElementById("stores").innerHTML=stores.map(s=>`<button class="store ${s===active?'active':''}" onclick="active='${s.replaceAll("'","\\'")}';renderStores();search()">${s}</button>`).join("")}
+function search(){
+ const q=document.getElementById("q").value.toLowerCase();
+ let rows=data.filter(x=>(active==="All"||x[1]===active)&&x[0].toLowerCase().includes(q.split(" ")[0]));
+ if(!rows.length) rows=data.filter(x=>active==="All"||x[1]===active);
+ document.getElementById("status").textContent=`${rows.length} normalized results • Search term: ${document.getElementById("q").value}`;
+ document.getElementById("results").innerHTML=rows.map(x=>`<tr>
+ <td><div class="product"><img class="pic" src="${img}"><div><div class="name">${x[0]}</div><div class="muted">Product result</div></div></div></td>
+ <td>${x[1]}</td><td class="price">${x[2]}</td><td class="rating">★ ${x[3]}</td><td>${x[4]}</td>
+ <td><a class="buy" href="${x[5]}" target="_blank" rel="noopener">View</a></td></tr>`).join("");
+}
+renderStores();search();
+</script>
+</body>
+</html>
